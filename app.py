@@ -15,7 +15,7 @@ def hello_world():
         rf=request.form.get("rf")
         
         def pred(n,p,k,t,h,ph,rf):
-            model=pickle.load(open('svc_clf.pkl','rb'))
+            model = pickle.load(open(r'd:\PROJECTS\crop prediction\CROP-PREDICTION\svc_clf.pkl', 'rb'))
             return model.predict([[n,p,k,t,h,ph,rf]])[0]
         
         ans = pred(n,p,k,t,h,ph,rf)
