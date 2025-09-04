@@ -1,32 +1,45 @@
+import os
 import pickle
-from flask import redirect, Flask, render_template, request, url_for
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
-@app.route('/', methods=['GET','POST'])
+
+# ✅ Load model once at startup
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "svc_clf.pkl")
+with open(MODEL_PATH, "rb") as f:
+    model = pickle.load(f)
+
+@app.route("/", methods=["GET", "POST"])
 def hello_world():
     ans = None
-    if request.method == 'POST':
-        n=request.form.get("n")        
-        p=request.form.get("p")
-        k=request.form.get("k")
-        t=request.form.get("t")
-        h=request.form.get("h")
-        ph=request.form.get("ph")
-        rf=request.form.get("rf")
-        
-        def pred(n,p,k,t,h,ph,rf):
-            model = pickle.load(open(r'd:\PROJECTS\crop prediction\CROP-PREDICTION\svc_clf.pkl', 'rb'))
-            return model.predict([[n,p,k,t,h,ph,rf]])[0]
-        
-        ans = pred(n,p,k,t,h,ph,rf)
-        return redirect(url_for('res', ans=str(ans)))
-    
-    return render_template('index.html', ans = ans)
+    if request.method == "POST":
+        try:
+            # Convert inputs to float safely
+            n  = float(request.form.get("n") or 0)
+            p  = float(request.form.get("p") or 0)
+            k  = float(request.form.get("k") or 0)
+            t  = float(request.form.get("t") or 0)
+            h  = float(request.form.get("h") or 0)
+            ph = float(request.form.get("ph") or 0)
+            rf = float(request.form.get("rf") or 0)
 
-@app.route('/result', methods=['GET','POST'])
+            # ✅ Make prediction
+            ans = model.predict([[n, p, k, t, h, ph, rf]])[0]
+
+            return redirect(url_for("res", ans=str(ans)))
+
+        except Exception as e:
+            print("Error:", e)
+            ans = "Invalid input"
+
+    return render_template("index.html", ans=ans)
+
+
+@app.route("/result")
 def res():
-    ans = request.args.get('ans', default="Try again", type = str)
-    return render_template('results.html', ans = ans)
+    ans = request.args.get("ans", default="Try again", type=str)
+    return render_template("results.html", ans=ans)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
